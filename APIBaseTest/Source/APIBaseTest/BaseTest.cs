@@ -2,7 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Threading.Tasks;
+using Autofac;
 using Autofac.Extras.Moq;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
@@ -12,12 +14,13 @@ using Newtonsoft.Json;
 
 namespace APIBaseTest
 {
-    public abstract class BaseTest<TSystem> where TSystem : class
+    public abstract class BaseTest<TSystem>
+        where TSystem : class
     {
         /*
          * Create a object to test
          */
-        protected TSystem GivenTheSystemUnderTest(AutoMock mock)
+        protected virtual TSystem GivenTheSystemUnderTest(AutoMock mock)
         {
             var sut = mock.Create<TSystem>();
 
@@ -189,7 +192,7 @@ namespace APIBaseTest
         /*
          * Clone
          */
-        public T CloneObject<T>(
+        protected T CloneObject<T>(
             T originObject)
             where T : new()
         {
@@ -203,7 +206,7 @@ namespace APIBaseTest
         /*
          * Check properties values
          */
-        public void CheckAllProperties<TExpected, TActual>(
+        protected void CheckAllProperties<TExpected, TActual>(
             TExpected expected,
             TActual actual,
             int? index = null)
@@ -212,7 +215,8 @@ namespace APIBaseTest
             {
                 var name = prop.Name;
                 var valueExpected = prop.GetValue(expected, null);
-                var valueActual = prop.GetValue(actual, null);
+
+                var valueActual = actual.GetType().GetProperty(name)?.GetValue(actual, null);
 
                 Assert.AreEqual(valueExpected, valueActual, (index == null ? "" : $"[{index}].") + $"{name} is not correct");
             }
@@ -221,7 +225,7 @@ namespace APIBaseTest
         /*
          * Check properties values in every object in list
          */
-        public void CheckAllProperties<TExpected, TActual>(
+        protected void CheckAllProperties<TExpected, TActual>(
             List<TExpected> expected,
             List<TActual> actual)
         {
@@ -231,6 +235,70 @@ namespace APIBaseTest
             {
                 CheckAllProperties(expected[index], actual[index], index);
             }
+        }
+
+        ///*
+        // * Check properties values
+        // */
+        //protected void CheckAllProperties<TType>(
+        //    TType expected,
+        //    TType actual,
+        //    int? index = null)
+        //{
+        //    foreach (var prop in expected.GetType().GetProperties())
+        //    {
+        //        var name = prop.Name;
+        //        var valueExpected = prop.GetValue(expected, null);
+        //        var valueActual = prop.GetValue(actual, null);
+
+        //        Assert.AreEqual(valueExpected, valueActual, (index == null ? "" : $"[{index}].") + $"{name} is not correct");
+        //    }
+        //}
+
+        ///*
+        // * Check properties values in every object in list
+        // */
+        //protected void CheckAllProperties<TType>(
+        //    List<TType> expected,
+        //    List<TType> actual)
+        //{
+        //    Assert.AreEqual(expected.Count, actual.Count, "Counts are different");
+
+        //    for (int index = 0; index < expected.Count; index++)
+        //    {
+        //        CheckAllProperties<TType>(expected[index], actual[index], index);
+        //    }
+        //}
+
+        /*
+         * Create instance IMapper
+         */
+        protected IMapper GivenTheAllRealMapper()
+        {
+            var assemblies = new List<Assembly>
+            {
+                Assembly.GetAssembly(typeof(TSystem))
+            };
+
+            var conf = new MapperConfiguration(expression =>
+            {
+                expression.AddMaps(assemblies);
+            });
+
+            conf.AssertConfigurationIsValid();
+
+            var sut = conf.CreateMapper();
+
+            return sut;
+        }
+
+        /*
+         * Register dependency basic, mapper
+         */
+        protected virtual void RegisterBasicDependency(ContainerBuilder builder)
+        {
+            var mapper = GivenTheAllRealMapper();
+            builder.RegisterInstance(mapper);
         }
     }
 }

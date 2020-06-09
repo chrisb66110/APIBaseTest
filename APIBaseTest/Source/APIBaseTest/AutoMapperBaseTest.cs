@@ -3,9 +3,10 @@ using AutoMapper;
 
 namespace APIBaseTest
 {
-    public abstract class AutoMapperBaseTest<TSystem> where TSystem : Profile
+    public abstract class AutoMapperBaseTest<TSystem> : BaseTest<IMapper>
+        where TSystem : Profile
     {
-        protected IMapper GivenTheSystemUnderTest(AutoMock mock)
+        protected override IMapper GivenTheSystemUnderTest(AutoMock mock)
         {
             var conf = new MapperConfiguration(expression =>
             {
