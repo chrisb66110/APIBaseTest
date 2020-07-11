@@ -106,16 +106,17 @@ namespace APIBaseTest
         /*
          * Mock dependency when result is a exception
          */
-        protected Mock<T> AndIMockDependencyMethod<T, TResult>(
+        protected Mock<T> AndIMockDependencyMethod<T, TResult, TException>(
             AutoMock mock,
             Expression<Func<T, TResult>> method,
-            Exception exception)
+            TException exception)
             where T : class
+            where TException : Exception
         {
             var mockDependency = mock.Mock<T>();
 
             mockDependency.Setup(method)
-                .Throws(CloneObject(exception));
+                .Throws(exception);
 
             return mockDependency;
         }
@@ -123,16 +124,17 @@ namespace APIBaseTest
         /*
          * Mock async dependency when result is a exception
          */
-        protected Mock<T> AndIMockDependencyMethod<T, TResult>(
+        protected Mock<T> AndIMockDependencyMethod<T, TResult, TException>(
             AutoMock mock,
             Expression<Func<T, Task<TResult>>> method,
-            Exception exception)
+            TException exception)
             where T : class
+            where TException : Exception
         {
             var mockDependency = mock.Mock<T>();
 
             mockDependency.Setup(method)
-                .Throws(CloneObject(exception));
+                .Throws(exception);
 
             return mockDependency;
         }
