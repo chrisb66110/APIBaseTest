@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Autofac;
-using Autofac.Extras.Moq;
-using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 
 namespace APIBaseTest
@@ -18,9 +15,6 @@ namespace APIBaseTest
             ClearTheDefaultDb();
         }
 
-        //Tambien tengo que cambiar los metodo de comparacio a que sean del mismo Type, asi no dan problemas,
-        //y buscar una forma de hacerlos con distintos tipos
-        
         protected DbContextOptions<TContext> GivenTheDefaultDbContextOptions()
         {
             var options = new DbContextOptionsBuilder<TContext>()
@@ -78,7 +72,6 @@ namespace APIBaseTest
             builder.RegisterInstance(options);
 
             base.RegisterBasicDependency(builder);
-
         }
     }
 }
