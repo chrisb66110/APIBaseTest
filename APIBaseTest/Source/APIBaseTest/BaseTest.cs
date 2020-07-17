@@ -34,7 +34,7 @@ namespace APIBaseTest
             Expression<Func<T, Task<TResult>>> method,
             TResult response)
             where T : class
-            where TResult : new()
+            //where TResult : new()
         {
             var mockDependency = mock.Mock<T>();
 
@@ -53,7 +53,7 @@ namespace APIBaseTest
             TResult response,
             Action<TParam> callback)
             where T : class
-            where TResult : new()
+            //where TResult : new()
         {
             var mockDependency = mock.Mock<T>();
 
@@ -72,7 +72,7 @@ namespace APIBaseTest
             Expression<Func<T, TResult>> method,
             TResult response)
             where T : class
-            where TResult : new()
+            //where TResult : new()
         {
             var mockDependency = mock.Mock<T>();
 
@@ -91,7 +91,7 @@ namespace APIBaseTest
             TResult response,
             Action<TParam> callback)
             where T : class
-            where TResult : new()
+            //where TResult : new()
         {
             var mockDependency = mock.Mock<T>();
 
@@ -195,7 +195,7 @@ namespace APIBaseTest
          */
         protected T CloneObject<T>(
             T originObject)
-            where T : new()
+            //where T : new()
         {
             var json = JsonConvert.SerializeObject(originObject);
 
@@ -212,14 +212,21 @@ namespace APIBaseTest
             TActual actual,
             int? index = null)
         {
-            foreach (var prop in expected.GetType().GetProperties())
+            if ((expected != null && actual == null) || (expected == null && actual != null))
             {
-                var name = prop.Name;
-                var valueExpected = prop.GetValue(expected, null);
+                Assert.Fail("An element to check is null");
+            }
+            else if (expected != null && actual != null)
+            {
+                foreach (var prop in actual.GetType().GetProperties())
+                {
+                    var name = prop.Name;
+                    var valueActual = prop.GetValue(actual, null);
 
-                var valueActual = actual.GetType().GetProperty(name)?.GetValue(actual, null);
+                    var valueExpected = expected.GetType().GetProperty(name)?.GetValue(expected, null);
 
-                Assert.AreEqual(valueExpected, valueActual, (index == null ? "" : $"[{index}].") + $"{name} is not correct");
+                    Assert.AreEqual(valueExpected, valueActual, (index == null ? "" : $"[{index}].") + $"{name} is not correct");
+                }
             }
         }
 
