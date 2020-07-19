@@ -1,4 +1,5 @@
-﻿using Autofac.Extras.Moq;
+﻿using System.Reflection;
+using Autofac.Extras.Moq;
 using AutoMapper;
 
 namespace APIBaseTest
@@ -10,7 +11,8 @@ namespace APIBaseTest
         {
             var conf = new MapperConfiguration(expression =>
             {
-                expression.AddProfile(typeof(TSystem));
+                var assembly = Assembly.GetAssembly(typeof(TSystem));
+                expression.AddMaps(assembly);
             });
 
             conf.AssertConfigurationIsValid();

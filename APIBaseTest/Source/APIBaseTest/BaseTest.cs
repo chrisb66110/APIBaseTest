@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using APIBaseTest.ExtensionsTest;
 using Autofac;
 using Autofac.Extras.Moq;
 using AutoMapper;
+using AutoMapper.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
@@ -218,65 +221,71 @@ namespace APIBaseTest
             }
             else if (expected != null && actual != null)
             {
-                foreach (var prop in actual.GetType().GetProperties())
+                if (expected.GetType().IsListType() && actual.GetType().IsListType())
                 {
-                    var name = prop.Name;
-                    var valueActual = prop.GetValue(actual, null);
+                    CheckAllProperties((IList)expected, (IList)actual);
+                }
+                else
+                {
+                    foreach (var prop in actual.GetType().GetProperties())
+                    {
+                        var name = prop.Name;
 
-                    var valueExpected = expected.GetType().GetProperty(name)?.GetValue(expected, null);
+                        var valueActual = prop.GetValue(actual, null);
+                        var valueExpected = expected.GetType().GetProperty(name).GetValue(expected, null);
 
-                    Assert.AreEqual(valueExpected, valueActual, (index == null ? "" : $"[{index}].") + $"{name} is not correct");
+                        if ((valueExpected != null && valueActual == null) ||
+                            (valueExpected == null && valueActual != null))
+                        {
+                            if ( (valueExpected != null && ((valueExpected.GetType().IsListType() && ((IList)valueExpected).Count != 0) || !valueExpected.GetType().IsListType())) ||
+                                 (valueActual != null && ((valueActual.GetType().IsListType() && ((IList)valueActual).Count != 0) || !valueActual.GetType().IsListType())) )
+                            {
+                                Assert.Fail("An element to check is null");
+                            }
+                        }
+                        else if (valueExpected != null && valueActual != null)
+                        {
+                            var valueActualIsPrimitive2 = valueActual.GetType().IsPrimitiveType();
+                            var valueExpectedIsPrimitive1 = valueExpected.GetType().IsPrimitiveType();
+
+                            if (!valueExpectedIsPrimitive1 && !valueActualIsPrimitive2)
+                            {
+                                var valueActualList = valueActual.GetType().IsListType();
+                                var valueExpectedList = valueExpected.GetType().IsListType();
+
+                                if (valueActualList && valueExpectedList)
+                                {
+                                    CheckAllProperties((IList)valueActual, (IList)valueExpected);
+                                }
+                                else
+                                {
+                                    CheckAllProperties(valueActual, valueExpected);
+                                }
+                            }
+                            else
+                            {
+                                Assert.AreEqual(valueExpected, valueActual, (index == null ? "" : $"[{index}].") + $"{name} is not correct");
+                            }
+                        }
+                    }
                 }
             }
         }
 
         /*
-         * Check properties values in every object in list
+         * Check list
          */
-        protected void CheckAllProperties<TExpected, TActual>(
-            List<TExpected> expected,
-            List<TActual> actual)
+        private void CheckAllProperties(
+            IList expected,
+            IList actual)
         {
             Assert.AreEqual(expected.Count, actual.Count, "Counts are different");
 
-            for (int index = 0; index < expected.Count; index++)
+            for (var index = 0; index < expected.Count; index++)
             {
                 CheckAllProperties(expected[index], actual[index], index);
             }
         }
-
-        ///*
-        // * Check properties values
-        // */
-        //protected void CheckAllProperties<TType>(
-        //    TType expected,
-        //    TType actual,
-        //    int? index = null)
-        //{
-        //    foreach (var prop in expected.GetType().GetProperties())
-        //    {
-        //        var name = prop.Name;
-        //        var valueExpected = prop.GetValue(expected, null);
-        //        var valueActual = prop.GetValue(actual, null);
-
-        //        Assert.AreEqual(valueExpected, valueActual, (index == null ? "" : $"[{index}].") + $"{name} is not correct");
-        //    }
-        //}
-
-        ///*
-        // * Check properties values in every object in list
-        // */
-        //protected void CheckAllProperties<TType>(
-        //    List<TType> expected,
-        //    List<TType> actual)
-        //{
-        //    Assert.AreEqual(expected.Count, actual.Count, "Counts are different");
-
-        //    for (int index = 0; index < expected.Count; index++)
-        //    {
-        //        CheckAllProperties<TType>(expected[index], actual[index], index);
-        //    }
-        //}
 
         /*
          * Create instance IMapper
